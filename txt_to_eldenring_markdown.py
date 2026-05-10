@@ -16,7 +16,7 @@ SLEEP_SECONDS = 1
 
 
 client = OpenAI(
-    api_key="sk-380c7c6ef697433d9a44dab70436f2d6",
+    api_key="your api key here",
     base_url="https://api.deepseek.com"
 )
 # =========================
