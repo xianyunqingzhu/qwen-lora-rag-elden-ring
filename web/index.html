@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>艾尔登法环 AI 攻略助手</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, "Microsoft YaHei", sans-serif;
+      color: #e5e7eb;
+    
+      background:
+        linear-gradient(rgba(17, 24, 39, 0.72), rgba(17, 24, 39, 0.82)),
+        url("./assets/bg.jpg");
+    
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #9ca3af;
+      margin-bottom: 24px;
+    }
+
+    .chat-box {
+      background: rgba(31, 41, 55, 0.78);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 16px;
+      padding: 20px;
+      min-height: 420px;
+      box-shadow: 0 12px 36px rgba(0,0,0,0.45);
+      overflow-y: auto;
+      max-height: 65vh;
+    }
+
+    .message {
+      margin-bottom: 18px;
+      line-height: 1.7;
+    }
+
+    .user {
+      color: #93c5fd;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    .assistant {
+      color: #86efac;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    .content {
+      background: rgba(17, 24, 39, 0.82);
+      padding: 14px;
+      border-radius: 10px;
+      white-space: normal;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .input-area {
+      display: flex;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    textarea {
+      flex: 1;
+      resize: none;
+      height: 70px;
+      border-radius: 8px;
+      border: none;
+      padding: 12px;
+      font-size: 16px;
+      outline: none;
+      background: #374151;
+      color: #f9fafb;
+    }
+
+    button {
+      width: 110px;
+      border: none;
+      border-radius: 8px;
+      background: #2563eb;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #1d4ed8;
+    }
+
+    button:disabled {
+      background: #6b7280;
+      cursor: not-allowed;
+    }
+
+    .loading {
+      display: none;
+      color: #facc15;
+      margin-top: 12px;
+    }
+
+    .footer {
+      text-align: center;
+      color: #6b7280;
+      font-size: 13px;
+      margin-top: 18px;
+    }
+
+    pre {
+      background: #020617;
+      padding: 12px;
+      border-radius: 6px;
+      overflow-x: auto;
+    }
+
+    code {
+      color: #facc15;
+    }
+
+    a {
+      color: #60a5fa;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>艾尔登法环 AI 攻略助手</h1>
+    <div class="subtitle">基于 Qwen2.5-7B + LoRA + RAG 的本地知识问答系统</div>
+
+    <div id="chatBox" class="chat-box">
+      <div class="message">
+        <div class="assistant">助手</div>
+        <div class="content">
+          你好，我是艾尔登法环攻略助手。你可以问我人物剧情、世界观、结局、角色关系等问题。
+        </div>
+      </div>
+    </div>
+
+    <div class="input-area">
+      <textarea id="questionInput" placeholder="请输入问题，例如：蒙葛特伟大的灵魂怎么体现？"></textarea>
+      <button id="sendBtn" onclick="sendQuestion()">发送</button>
+    </div>
+
+    <div id="loading" class="loading">正在检索知识库并生成回答...</div>
+
+    <div class="footer">
+      API: /rag/chat
+    </div>
+  </div>
+
+  <script>
+    const API_URL = "http://127.0.0.1:9000/rag/chat";
+
+    const chatBox = document.getElementById("chatBox");
+    const input = document.getElementById("questionInput");
+    const sendBtn = document.getElementById("sendBtn");
+    const loading = document.getElementById("loading");
+
+    function addMessage(role, text) {
+      const messageDiv = document.createElement("div");
+      messageDiv.className = "message";
+
+      const roleDiv = document.createElement("div");
+      roleDiv.className = role === "user" ? "user" : "assistant";
+      roleDiv.textContent = role === "user" ? "你" : "助手";
+
+      const contentDiv = document.createElement("div");
+      contentDiv.className = "content";
+
+      if (role === "assistant") {
+        contentDiv.innerHTML = marked.parse(text);
+      } else {
+        contentDiv.textContent = text;
+      }
+
+      messageDiv.appendChild(roleDiv);
+      messageDiv.appendChild(contentDiv);
+      chatBox.appendChild(messageDiv);
+
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    async function sendQuestion() {
+      const question = input.value.trim();
+
+      if (!question) {
+        alert("请输入问题");
+        return;
+      }
+
+      addMessage("user", question);
+
+      input.value = "";
+      sendBtn.disabled = true;
+      loading.style.display = "block";
+
+      try {
+        const response = await fetch(API_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            question: question,
+            top_k: 4
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error("接口请求失败：" + response.status);
+        }
+
+        const data = await response.json();
+
+        const formatted =
+          (data.answer || "没有获取到回答")
+            .replace(/\\n/g, "\n");
+        
+        addMessage("assistant", formatted);
+      } catch (error) {
+        addMessage("assistant", "请求失败：" + error.message);
+      } finally {
+        sendBtn.disabled = false;
+        loading.style.display = "none";
+        input.focus();
+      }
+    }
+
+    input.addEventListener("keydown", function(event) {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        sendQuestion();
+      }
+    });
+  </script>
+</body>
+</html>
