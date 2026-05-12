@@ -1,0 +1,11 @@
+{
+  "elden_ring": {
+    "file_name": "elden_ring.json",
+    "formatting": "alpaca",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output"
+    }
+  }
+}
