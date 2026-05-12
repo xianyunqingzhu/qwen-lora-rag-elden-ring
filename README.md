@@ -809,7 +809,9 @@ examples/train_lora/qwen2_5_7b_elden_lora.yaml
 - 模型会逐渐学习游戏问答风格
 
 # 六、LoRA 微调效果分析
-测试内容：pdf链接，第一个回答是lora训练后的，第二个回答是原始模型。
+测试内容：
+[测试内容.pdf](assets/after_lora.pdf)第一个回答是lora训练后的，第二个回答是原始模型。
+
 ## 成功部分
 
 经过 LoRA 微调后：
@@ -1286,6 +1288,7 @@ python rag/retriever.py \
 如果输出了与菈妮相关的文本片段，
 说明向量库构建和检索流程正常。
 
+[测试内容.pdf]（assets/after_rag.pdf)
 ---
 
 # 十、编写 RAG Chat 模块
